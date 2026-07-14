@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OAuth 2.0 & OpenID Connect – Protocol Documentation</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+      font-size: 14px;
+      color: #1f2d3d;
+      background: #f0f2f5;
+      line-height: 1.6;
+    }
+
+    /* ── LAYOUT ── */
+    .layout { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 240px;
+      flex-shrink: 0;
+      background: #1a3560;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 28px 0 40px;
+    }
+
+    .sidebar-title {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #93c5fd;
+      padding: 0 20px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 10px;
+    }
+
+    .nav-group-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #ff9900;
+      padding: 12px 20px 4px;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 6px 20px 6px 28px;
+      font-size: 12.5px;
+      color: #cbd5e1;
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .sidebar a:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.07);
+      border-left-color: #ff9900;
+    }
+
+    .content { flex: 1; padding: 36px 44px 60px; max-width: 980px; }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #1a3560 0%, #1d5aa8 100%);
+      color: #fff;
+      border-radius: 8px;
+      padding: 32px 36px;
+      margin-bottom: 36px;
+    }
+
+    .hero h1 { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+    .hero p   { font-size: 13.5px; color: #bfdbfe; line-height: 1.7; max-width: 740px; }
+
+    .badge-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+    .badge { font-size: 11px; font-weight: 700; padding: 4px 13px; border-radius: 20px; }
+    .badge-oauth  { background: #f97316; color: #fff; }
+    .badge-oidc   { background: #8b5cf6; color: #fff; }
+    .badge-cc     { background: #0ea5e9; color: #fff; }
+    .badge-tenant { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); font-size: 10.5px; }
+
+    /* ── SECTIONS ── */
+    .section { margin-bottom: 44px; }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #1a3560;
+      border-left: 5px solid #1a3560;
+      padding-left: 14px;
+      margin-bottom: 18px;
+    }
+    .section-title.oauth { border-left-color: #f97316; color: #c2410c; }
+    .section-title.oidc  { border-left-color: #8b5cf6; color: #5b21b6; }
+    .section-title.cc    { border-left-color: #0ea5e9; color: #0369a1; }
+
+    .subsection-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e4d8c;
+      margin: 24px 0 12px;
+      padding-bottom: 5px;
+      border-bottom: 1px dashed #c7d8f0;
+    }
+
+    p { margin-bottom: 10px; color: #374151; }
+
+    /* ── CALLOUTS ── */
+    .callout {
+      border-radius: 5px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      font-size: 13.5px;
+    }
+    .callout-yellow { background: #fffbeb; border: 1px solid #f59e0b; border-left: 4px solid #f59e0b; color: #78350f; }
+    .callout-blue   { background: #eff6ff; border: 1px solid #93c5fd; border-left: 4px solid #2563eb; color: #1e3a5f; }
+    .callout-orange { background: #fff7ed; border: 1px solid #fdba74; border-left: 4px solid #f97316; color: #7c2d12; }
+    .callout-purple { background: #f5f3ff; border: 1px solid #c4b5fd; border-left: 4px solid #8b5cf6; color: #3b0764; }
+    .callout-sky    { background: #f0f9ff; border: 1px solid #7dd3fc; border-left: 4px solid #0ea5e9; color: #0c4a6e; }
+
+    /* ── TABLES ── */
+    .tbl-wrap { overflow-x: auto; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; border-radius: 6px; overflow: hidden; font-size: 13px; }
+
+    .thead-navy  tr { background: #1a3560; }
+    .thead-oauth tr { background: #c2410c; }
+    .thead-oidc  tr { background: #5b21b6; }
+    .thead-cc    tr { background: #0369a1; }
+
+    thead th { padding: 11px 14px; text-align: left; font-weight: 700; color: #fff; letter-spacing: 0.3px; }
+    tbody tr:nth-child(even) { background: #f8f9fb; }
+    tbody tr:nth-child(odd)  { background: #fff; }
+    tbody tr:hover           { background: #eef3fb; }
+    tbody td { padding: 10px 14px; border-bottom: 1px solid #e5e9f0; vertical-align: top; }
+
+    /* ── STEP NUMBERS ── */
+    .sn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 50%;
+      font-size: 12px; font-weight: 800; flex-shrink: 0; color: #fff;
+    }
+    .sn-navy   { background: #1a3560; }
+    .sn-orange { background: #c2410c; }
+    .sn-purple { background: #5b21b6; }
+    .sn-sky    { background: #0369a1; }
+
+    /* ── FLOW DIAGRAM ── */
+    .flow-diagram {
+      background: #fff;
+      border: 1px solid #e5e9f0;
+      border-radius: 8px;
+      padding: 22px 18px 18px;
+      margin-bottom: 22px;
+    }
+
+    /* Lane headers */
+    .lanes { display: flex; min-width: 520px; margin-bottom: 0; }
+    .lane  { flex: 1; display: flex; flex-direction: column; align-items: center; }
+    .lane-header {
+      width: 100%; text-align: center; padding: 9px 6px;
+      border-radius: 6px 6px 0 0; font-size: 12px; font-weight: 700; color: #fff;
+    }
+    .lh-user   { background: #7c3aed; }
+    .lh-app    { background: #c2410c; }
+    .lh-az     { background: #059669; }
+    .lh-svc    { background: #0369a1; }
+    .lane-body { width: 2px; background: #d1d5db; flex: 1; min-height: 14px; }
+
+    /* Flow steps */
+    .flow-steps { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+
+    .fstep {
+      display: flex; align-items: flex-start; gap: 12px;
+      border-radius: 6px; padding: 11px 14px;
+    }
+    .fstep-oauth  { background: #fff8f5; border: 1px solid #fed7aa; }
+    .fstep-oidc   { background: #faf5ff; border: 1px solid #ddd6fe; }
+    .fstep-cc     { background: #f0f9ff; border: 1px solid #bae6fd; }
+
+    .fstep-body { flex: 1; }
+    .fstep-title  { font-weight: 700; font-size: 13px; color: #1a3560; margin-bottom: 3px; }
+    .fstep-detail { font-size: 12.5px; color: #4b5563; line-height: 1.6; }
+
+    .flow-arrow {
+      font-size: 12px; color: #9ca3af; font-style: italic;
+      margin: 0 0 4px 40px;
+    }
+
+    /* ── CODE BLOCKS ── */
+    .code-block {
+      background: #1e1e2e; border-radius: 6px;
+      padding: 15px 18px; margin: 10px 0 14px; overflow-x: auto;
+    }
+    .code-block pre {
+      font-family: 'Cascadia Code','Consolas','Courier New',monospace;
+      font-size: 11.5px; line-height: 1.65; color: #cdd6f4; white-space: pre;
+    }
+    .ck  { color: #89dceb; }   /* key   */
+    .cv  { color: #a6e3a1; }   /* value */
+    .cu  { color: #fab387; }   /* url   */
+    .cc  { color: #6c7086; font-style: italic; } /* comment */
+    .ch  { color: #f38ba8; }   /* highlight */
+
+    /* ── COMPARE BOXES ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+
+    .cbox { border-radius: 7px; padding: 18px 20px; }
+    .cbox-oauth  { background: #fff7ed; border: 1px solid #fdba74; }
+    .cbox-oidc   { background: #f5f3ff; border: 1px solid #c4b5fd; }
+    .cbox h3 { font-size: 13.5px; font-weight: 800; margin-bottom: 10px; }
+    .cbox-oauth h3 { color: #c2410c; }
+    .cbox-oidc  h3 { color: #5b21b6; }
+    .cbox ul { padding-left: 18px; }
+    .cbox li { font-size: 12.5px; color: #374151; margin-bottom: 5px; }
+
+    /* highlight actors */
+    .a-user { color: #7c3aed; font-weight: 600; }
+    .a-app  { color: #c2410c; font-weight: 600; }
+    .a-az   { color: #059669; font-weight: 600; }
+    .a-svc  { color: #0369a1; font-weight: 600; }
+
+    code {
+      background: #f1f5f9; color: #be185d;
+      font-family: 'Consolas',monospace; font-size: 12px;
+      padding: 1px 5px; border-radius: 3px;
+    }
+
+    /* ── PRINT ── */
+    @media print {
+      .sidebar { display: none; }
+      .content { padding: 20px 30px; max-width: 100%; }
+      .hero, .lane-header, .fstep, thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ── SIDEBAR ──────────────────────────────────────── -->
+  <nav class="sidebar">
+    <div class="sidebar-title">Protocol Docs</div>
+
+    <div class="nav-group-label">Overview</div>
+    <a href="#overview">OAuth vs OpenID Connect</a>
+    <a href="#endpoints">Azure AD Endpoints</a>
+
+    <div class="nav-group-label">OAuth 2.0</div>
+    <a href="#auth-code">Authorization Code Flow</a>
+    <a href="#auth-code-steps">Step-by-Step</a>
+    <a href="#auth-code-request">Authorize Request</a>
+    <a href="#token-request">Token Request</a>
+
+    <div class="nav-group-label">Client Credentials</div>
+    <a href="#client-creds">Client Credentials Flow</a>
+    <a href="#cc-request">Token Request</a>
+
+    <div class="nav-group-label">OpenID Connect</div>
+    <a href="#oidc">OpenID Connect Flow</a>
+    <a href="#oidc-steps">Step-by-Step</a>
+    <a href="#id-token">ID Token</a>
+
+    <div class="nav-group-label">Reference</div>
+    <a href="#comparison">OAuth vs OIDC Comparison</a>
+    <a href="#params">Parameters Reference</a>
+  </nav>
+
+  <!-- ── CONTENT ───────────────────────────────────────── -->
+  <main class="content">
+
+    <!-- HERO -->
+    <div class="hero">
+      <h1>OAuth 2.0 &amp; OpenID Connect</h1>
+      <p>
+        A complete explanation of how OAuth 2.0 and OpenID Connect work with
+        Azure Active Directory — covering Authorization Code Flow, Client Credentials Flow,
+        and OpenID Connect Authentication Flow with real endpoint URLs and request examples
+        from the <strong>Conceptswork.com</strong> tenant.
+      </p>
+      <div class="badge-row">
+        <span class="badge badge-oauth">OAuth 2.0</span>
+        <span class="badge badge-oidc">OpenID Connect</span>
+        <span class="badge badge-cc">Client Credentials</span>
+        <span class="badge badge-tenant">Tenant: Conceptswork.com</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         OVERVIEW
+    ════════════════════════════════════════════════════ -->
+    <section class="section" id="overview">
+      <div class="section-title">OAuth 2.0 vs OpenID Connect</div>
+
+      <p>
+        OAuth 2.0 and OpenID Connect are modern protocols used by an
+        <strong>Application</strong> and <strong>Azure Active Directory</strong>
+        to communicate with each other — to grant access to resources and verify
+        user identity respectively.
+      </p>
+
+      <div class="two-col">
+        <div class="cbox cbox-oauth">
+          <h3>OAuth 2.0 — Authorization</h3>
+          <ul>
+            <li>Used to <strong>grant an application access</strong> to a resource (e.g. Microsoft Graph API)</li>
+            <li>Returns an <strong>Access Token</strong> — used to call APIs</li>
+            <li>Does <strong>not</strong> tell you who the user is</li>
+            <li>scope: <code>https://graph.microsoft.com/User.Read</code></li>
+            <li>response_type: <code>code</code></li>
+            <li>Two flows: <strong>Authorization Code</strong> (user) and <strong>Client Credentials</strong> (service)</li>
+          </ul>
+        </div>
+        <div class="cbox cbox-oidc">
+          <h3>OpenID Connect — Authentication</h3>
+          <ul>
+            <li>Built <strong>on top of OAuth 2.0</strong> — adds user identity</li>
+            <li>Returns an <strong>ID Token</strong> containing user claims (name, email, etc.) <em>plus</em> an Access Token</li>
+            <li>Used to <strong>verify who the user is</strong> — Sign In / SSO</li>
+            <li>scope: <code>openid</code> (required — V2.0 endpoint requires scopes)</li>
+            <li>response_type: <code>code id_token</code></li>
+            <li>The ID Token is the proof that <em>OpenID Connect is an Authentication Protocol</em></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout callout-yellow">
+        <strong>Key rule:</strong> Both OAuth 2.0 and OpenID Connect use the
+        <strong>same two Azure AD endpoints</strong> — the Authorize Endpoint and the Token Endpoint.
+        The difference is in the <code>scope</code> and <code>response_type</code> parameters you send.
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         AZURE AD ENDPOINTS
+    ════════════════════════════════════════════════════ -->
+    <section class="section" id="endpoints">
+      <div class="section-title">Azure AD Endpoints — Conceptswork.com</div>
+
+      <p>
+        Both OAuth 2.0 and OpenID Connect use these two endpoints on Azure Active Directory.
+        All authentication and token exchange passes through them.
+      </p>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead class="thead-navy">
+            <tr><th>Endpoint</th><th>Purpose</th><th>URL</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Authorize Endpoint</strong></td>
+              <td>User signs in here. Azure AD authenticates the user and returns an authorization code (and ID Token for OIDC).</td>
+              <td>
+                <code style="font-size:11px;">https://login.microsoftonline.com/</code><br>
+                <code style="font-size:11px;">6501ad74-2016-4862-836d-ee29d944b1d8/oauth2/v2.0/authorize</code>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Token Endpoint</strong></td>
+              <td>The application exchanges the authorization code for an Access Token here. Also used directly for Client Credentials flow.</td>
+              <td>
+                <code style="font-size:11px;">https://login.microsoftonline.com/</code><br>
+                <code style="font-size:11px;">6501ad74-2016-4862-836d-ee29d944b1d8/oauth2/v2.0/token</code>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout callout-blue">
+        <strong>Tenant ID:</strong> <code>6501ad74-2016-4862-836d-ee29d944b1d8</code> — this is the unique identifier for the
+        <strong>Conceptswork.com</strong> Azure AD tenant. It appears in every endpoint URL.
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         OAUTH 2.0 — AUTHORIZATION CODE FLOW
+    ════════════════════════════════════════════════════ -->
+    <section class="section" id="auth-code">
+      <div class="section-title oauth">OAuth 2.0 — Authorization Code Flow</div>
+
+      <p>
+        The Authorization Code Flow is used when a <strong>user needs to log in</strong> and grant
+        an application permission to access resources on their behalf (e.g. reading their profile
+        from Microsoft Graph). It involves two phases: the user authenticates at the
+        <strong>Authorize Endpoint</strong>, then the application exchanges the returned code for
+        an <strong>Access Token</strong> at the <strong>Token Endpoint</strong>.
+      </p>
+
+      <div class="callout callout-orange">
+        <strong>When to use:</strong> When a <em>user</em> is present and the application needs
+        to access Microsoft Graph or another API on their behalf.
+      </div>
+    </section>
+
+    <!-- Steps -->
+    <section class="section" id="auth-code-steps">
+      <div class="section-title oauth">Authorization Code Flow — Step by Step</div>
+
+      <!-- Lane diagram -->
+      <div class="flow-diagram">
+        <div class="lanes">
+          <div class="lane"><div class="lane-header lh-user">User (Browser)</div><div class="lane-body"></div></div>
+          <div class="lane"><div class="lane-header lh-app">Application<br>application.com</div><div class="lane-body"></div></div>
+          <div class="lane"><div class="lane-header lh-az">Azure AD<br>Conceptswork.com</div><div class="lane-body"></div></div>
+        </div>
+
+        <div class="flow-steps">
+
+          <div class="fstep fstep-oauth">
+            <div class="sn sn-orange">1</div>
+            <div class="fstep-body">
+              <div class="fstep-title"><span class="a-user">User</span> opens the Application</div>
+              <div class="fstep-detail">
+                User navigates to <code>https://application.com</code> in the browser.
+                The application checks whether the user has an active session.
+                No session is found — authentication must begin.
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-arrow">↓ No session — application initiates OAuth 2.0 flow</div>
+
+          <div class="fstep fstep-oauth">
+            <div class="sn sn-orange">2</div>
+            <div class="fstep-body">
+              <div class="fstep-title"><span class="a-app">Application</span> → <span class="a-az">Azure AD Authorize Endpoint</span>: Redirect user to sign in</div>
+              <div class="fstep-detail">
+                The application sends the browser to the Azure AD <strong>Authorize Endpoint</strong>
+                via an HTTP 302 redirect. This URL tells Azure AD: which application is requesting
+                access, what permissions are needed, and where to send the response.
+              </div>
+            </div>
+          </div>
+
+          <div style="margin: 0 0 10px 40px;">
+            <div class="code-block">
+              <pre><span class="cu">https://login.microsoftonline.com/conceptswork.com/oauth2/v2.0/authorize</span>
+  <span class="ck">?client_id</span>=<span class="cv">673121de76-14a6-49ae-97bc-6eba6914391e</span>
+  <span class="ck">&amp;response_type</span>=<span class="cv">code</span>
+  <span class="ck">&amp;redirect_uri</span>=<span class="cv">http://localhost/</span>
+  <span class="ck">&amp;scope</span>=<span class="cv">https://graph.microsoft.com/User.Read</span></pre>
+            </div>
+          </div>
+
+          <div class="fstep fstep-oauth">
+            <div class="sn sn-orange">3</div>
+            <div class="fstep-body">
+              <div class="fstep-title"><span class="a-az">Azure AD</span>: Prompts user to sign in and accept consent</div>
+              <div class="fstep-detail">
+                Azure AD presents its login page at the Authorize Endpoint.
+                The user is prompted to <strong>enter their credentials</strong> (username &amp; password).
+                After authentication, Azure AD shows a <strong>consent screen</strong> listing the
+                permissions the application is requesting — in this case, <em>User.Read</em>
+                (read the user's profile). The user must <strong>accept the consent</strong>
+                to proceed.
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-arrow">↓ User signs in and consents → Azure AD generates a one-time authorization code</div>
+
+          <div class="fstep fstep-oauth">
+            <div class="sn sn-orange">4</div>
+            <div class="fstep-body">
+              <div class="fstep-title"><span class="a-az">Azure AD Authorize Endpoint</span> → <span class="a-app">Application</span>: Returns authorization code</div>
+              <div class="fstep-detail">
+                Azure AD redirects the browser back to the application's <code>redirect_uri</code>
+                with a short-lived <strong>authorization code</strong> in the URL.
+                This code is a one-time-use value — it is <em>not</em> the Access Token.
+                It must be exchanged at the Token Endpoint to get actual tokens.
+              </div>
+            </div>
+          </div>
+
+          <div style="margin: 0 0 10px 40px;">
+            <div class="code-block">
+              <pre><span class="cu">http://localhost/</span>
+  <span class="ck">?code</span>=<span class="cv">OAAABAAAIL9Kn2227UulwVFPbm0gLWQJVzCTE9UkP3p5x1aXxUjq3n8b2JRLk4OVXr...</span></pre>
+            </div>
+          </div>
+
+          <div class="flow-arrow">↓ Application receives the code — now exchanges it at Token Endpoint (back-channel)</div>
+
+          <div class="fstep fstep-oauth" id="token-request">
+            <div class="sn sn-orange">5</div>
+            <div class="fstep-body">
+              <div class="fstep-title"><span class="a-app">Application</span> → <span class="a-az">Azure AD Token Endpoint</span>: Exchange code for Access Token</div>
+              <div class="fstep-detail">
+                The application makes a <strong>direct server-to-server POST</strong> to the
+                Token Endpoint — this call never goes through the browser. The application
+                proves its identity using its <strong>Client Secret</strong> and sends the
+                code received in step 4. All highlighted values are required:
+              </div>
+            </div>
+          </div>
+
+          <div style="margin: 0 0 10px 40px;">
+            <div class="code-block">
+              <pre><span class="cc">POST https://login.microsoftonline.com/conceptswork.com/oauth2/v2.0/token</span>
+
+  <span class="ck">client_id</span>     = <span class="cv">6731de76-14a6-49ae-97bc-6eba6914391e</span>
+  <span class="ck">scope</span>         = <span class="cv">https://graph.microsoft.com/User.Read</span>
+  <span class="ck">code</span>          = <span class="ch">OAAABAAAIL9Kn2227UulwVFPbm0gLWQJVzCTE9UkP3p5x1aXxUjq3n8b2JRLk4OVXr...</span>
+  <span class="ck">redirect_uri</span>  = <span class="cv">https://localhost/</span>
+  <span class="ck">grant_type</span>    = <span class="ch">authorization_code</span>
+  <span class="ck">client_secret</span> = <span class="ch">JqQX2PNo9bpM0uEIhUPzyrh</span></pre>
+            </div>
+          </div>
+
+          <div class="fstep fstep-oauth">
+            <div class="sn sn-orange">6</div>
+            <div class="fstep-body">
+              <div class="fstep-title"><span class="a-az">Azure AD Token Endpoint</span> → <span class="a-app">Application</span>: Returns Access Token</div>
+              <div class="fstep-detail">
+                Azure AD validates the code, client_id, and client_secret. On success it returns
+                an <strong>Access Token</strong>. The application now uses this token to call
+                the Microsoft Graph API (or any other resource) on behalf of the user.
+                The token is included in the <code>Authorization: Bearer &lt;token&gt;</code>
+                header of every API request.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Auth Code params table -->
+      <div class="subsection-title" id="auth-code-request">Authorization Request — Parameter Reference</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead class="thead-oauth">
+            <tr><th>Parameter</th><th>Value (Conceptswork example)</th><th>What it means</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>client_id</code></td>
+              <td><code>673121de76-14a6-49ae-97bc-6eba6914391e</code></td>
+              <td>The unique ID of the registered application in Azure AD</td>
+            </tr>
+            <tr>
+              <td><code>response_type</code></td>
+              <td><code>code</code></td>
+              <td>Tells Azure AD to return an <strong>authorization code</strong> — not a token directly</td>
+            </tr>
+            <tr>
+              <td><code>redirect_uri</code></td>
+              <td><code>http://localhost/</code></td>
+              <td>The URL Azure AD sends the code back to. Must be registered in the app registration.</td>
+            </tr>
+            <tr>
+              <td><code>scope</code></td>
+              <td><code>https://graph.microsoft.com/User.Read</code></td>
+              <td>The permission being requested — read the user's profile from Microsoft Graph</td>
+            </tr>
+            <tr>
+              <td><code>code</code></td>
+              <td><code>OAAABAAAIL9Kn2227Uulw…</code></td>
+              <td>One-time authorization code returned by Azure AD after login. Used in the token request.</td>
+            </tr>
+            <tr>
+              <td><code>grant_type</code></td>
+              <td><code>authorization_code</code></td>
+              <td>Tells the Token Endpoint which flow is being used</td>
+            </tr>
+            <tr>
+              <td><code>client_secret</code></td>
+              <td><code>JqQX2PNo9bpM0uEIhUPzyrh</code></td>
+              <td>The application's secret — proves the application's identity to Azure AD at the Token Endpoint. <strong>Never exposed to the browser.</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         CLIENT CREDENTIALS FLOW
+    ════════════════════════════════════════════════════ -->
+    <section class="section" id="client-creds">
+      <div class="section-title cc">OAuth 2.0 — Client Credentials Flow</div>
+
+      <p>
+        The Client Credentials Flow is used by <strong>Service Applications and Daemons</strong> —
+        background services, automation scripts, or APIs that run <em>without a user</em>.
+        The application authenticates using its own <strong>Client ID</strong> and
+        <strong>Client Secret</strong> directly at the Token Endpoint.
+        No Authorize Endpoint, no login page, no user consent.
+      </p>
+
+      <div class="callout callout-sky">
+        <strong>When to use:</strong> Daemon processes, scheduled jobs, service-to-service calls,
+        automation pipelines — any scenario where there is <em>no interactive user</em>.
+        <strong>Client ID and Client Secret are required parameters.</strong>
+      </div>
+
+      <!-- Lane diagram -->
+      <div class="flow-diagram">
+        <div class="lanes">
+          <div class="lane"><div class="lane-header lh-svc">Service App / Daemon<br>application.com</div><div class="lane-body"></div></div>
+          <div class="lane"><div class="lane-header lh-az">Azure AD<br>Token Endpoint only</div><div class="lane-body"></div></div>
+        </div>
+
+        <div class="flow-steps">
+
+          <div class="fstep fstep-cc">
+            <div class="sn sn-sky">1</div>
+            <div class="fstep-body">
+              <div class="fstep-title"><span class="a-svc">Service Application</span> → <span class="a-az">Azure AD Token Endpoint</span>: Request token directly</div>
+              <div class="fstep-detail">
+                There is no user, no browser, and no Authorize Endpoint involved.
+                The service application posts its own <strong>Client ID</strong> and
+                <strong>Client Secret</strong> directly to the Token Endpoint to authenticate
+                as <em>itself</em> and request an Access Token.
+              </div>
+            </div>
+          </div>
+
+          <div style="margin: 0 0 10px 40px;" id="cc-request">
+            <div class="code-block">
+              <pre><span class="cc">POST https://login.microsoftonline.com/conceptswork.com/oauth2/v2.0/token</span>
+
+  <span class="ck">client_id</span>     = <span class="ch">535fb089-9ff3-47b6-9bfb-4f1264799865</span>
+  <span class="ck">scope</span>         = <span class="cv">https://graph.microsoft.com/.default</span>
+  <span class="ck">client_secret</span> = <span class="ch">qWgdYAmab0YSkuL1qKv5bPK</span>
+  <span class="ck">grant_type</span>    = <span class="ch">client_credentials</span></pre>
+            </div>
+          </div>
+
+          <div class="fstep fstep-cc">
+            <div class="sn sn-sky">2</div>
+            <div class="fstep-body">
+              <div class="fstep-title"><span class="a-az">Azure AD</span> validates and returns Access Token</div>
+              <div class="fstep-detail">
+                Azure AD validates the client_id and client_secret.
+                If valid, it returns an <strong>Access Token</strong> representing the
+                service application's own identity — not a user's identity.
+                The token is sent directly back to the service application.
+              </div>
+            </div>
+          </div>
+
+          <div class="fstep fstep-cc">
+            <div class="sn sn-sky">3</div>
+            <div class="fstep-body">
+              <div class="fstep-title"><span class="a-svc">Service Application</span>: Uses Access Token to call the API</div>
+              <div class="fstep-detail">
+                The service application uses the Access Token to make authenticated
+                API calls with <code>Authorization: Bearer &lt;access_token&gt;</code>.
+                The scope <code>.default</code> means the application uses all the API
+                permissions that were pre-configured in its Azure AD app registration.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead class="thead-cc">
+            <tr><th>Parameter</th><th>Value (Conceptswork example)</th><th>What it means</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>client_id</code></td>
+              <td><code>535fb089-9ff3-47b6-9bfb-4f1264799865</code></td>
+              <td>The service application's unique Azure AD App Registration ID</td>
+            </tr>
+            <tr>
+              <td><code>scope</code></td>
+              <td><code>https://graph.microsoft.com/.default</code></td>
+              <td><code>.default</code> means — use all permissions pre-granted to this app in Azure AD. There is no per-user consent.</td>
+            </tr>
+            <tr>
+              <td><code>client_secret</code></td>
+              <td><code>qWgdYAmab0YSkuL1qKv5bPK</code></td>
+              <td>The application's password — authenticates the service to Azure AD</td>
+            </tr>
+            <tr>
+              <td><code>grant_type</code></td>
+              <td><code>client_credentials</code></td>
+              <td>Tells Azure AD this is the Client Credentials flow — no user involved</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         OPENID CONNECT
+    ════════════════════════════════════════════════════ -->
+    <section class="section" id="oidc">
+      <div class="section-title oidc">OpenID Connect — Authentication Flow</div>
+
+      <p>
+        OpenID Connect is built <strong>on top of OAuth 2.0</strong> and uses the
+        <strong>same two endpoints</strong> (Authorize and Token). The difference is that
+        OpenID Connect adds <code>scope=openid</code> and uses
+        <code>response_type=code id_token</code>, which causes Azure AD to return an
+        <strong>ID Token</strong> alongside the authorization code.
+      </p>
+
+      <div class="callout callout-purple">
+        <strong>The ID Token is what makes OpenID Connect an Authentication Protocol.</strong>
+        It is a signed JWT containing <em>user claims</em> — the user's identity
+        (name, email, object ID, etc.). The application uses it to verify <em>who</em> the
+        user is. Without OpenID Connect, OAuth 2.0 only tells you <em>what</em> the user
+        approved — not <em>who</em> they are.
+      </div>
+
+      <div class="callout callout-blue">
+        <strong>Important — V2.0 endpoint requires scopes:</strong> The Azure AD v2.0
+        endpoint (<code>/oauth2/v2.0/authorize</code>) requires the <code>scope</code>
+        parameter to be explicitly set. For OpenID Connect, <code>scope=openid</code>
+        is mandatory. Without it, no ID Token is returned.
+      </div>
+    </section>
+
+    <!-- OIDC Steps -->
+    <section class="section" id="oidc-steps">
+      <div class="section-title oidc">OpenID Connect — Step by Step</div>
+
+      <div class="flow-diagram">
+        <div class="lanes">
+          <div class="lane"><div class="lane-header lh-user">User (Browser)</div><div class="lane-body"></div></div>
+          <div class="lane"><div class="lane-header lh-app">Application<br>application.com</div><div class="lane-body"></div></div>
+          <div class="lane"><div class="lane-header lh-az">Azure AD<br>Conceptswork.com</div><div class="lane-body"></div></div>
+        </div>
+
+        <div class="flow-steps">
+
+          <div class="fstep fstep-oidc">
+            <div class="sn sn-purple">1</div>
+            <div class="fstep-body">
+              <div class="fstep-title"><span class="a-user">User</span> opens the Application</div>
+              <div class="fstep-detail">
+                User navigates to <code>https://application.com</code>. No active session exists.
+                The application initiates the OpenID Connect flow.
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-arrow">↓ Application builds the OIDC authorize request</div>
+
+          <div class="fstep fstep-oidc">
+            <div class="sn sn-purple">2</div>
+            <div class="fstep-body">
+              <div class="fstep-title"><span class="a-app">Application</span> → <span class="a-az">Azure AD Authorize Endpoint</span>: Redirect to sign in</div>
+              <div class="fstep-detail">
+                The application redirects the browser to the Authorize Endpoint.
+                The key difference from OAuth 2.0 is:
+                <code>response_type=code id_token</code> (returns both a code <em>and</em> an ID Token)
+                and <code>scope=openid</code>.
+              </div>
+            </div>
+          </div>
+
+          <div style="margin: 0 0 10px 40px;">
+            <div class="code-block">
+              <pre><span class="cu">https://login.microsoftonline.com/conceptswork.com/oauth2/v2.0/authorize</span>
+  <span class="ck">?client_id</span>     = <span class="cv">673121de76-14a6-49ae-97bc-6eba6914391e</span>
+  <span class="ck">&amp;response_type</span> = <span class="ch">code id_token</span>          <span class="cc">← requests both code AND ID Token</span>
+  <span class="ck">&amp;redirect_uri</span>  = <span class="cv">http://localhost/</span>
+  <span class="ck">&amp;scope</span>         = <span class="ch">openid</span>                 <span class="cc">← mandatory for OpenID Connect</span></pre>
+            </div>
+          </div>
+
+          <div class="fstep fstep-oidc">
+            <div class="sn sn-purple">3</div>
+            <div class="fstep-body">
+              <div class="fstep-title"><span class="a-az">Azure AD</span>: Authenticates the user — consent screen</div>
+              <div class="fstep-detail">
+                Azure AD presents the login page. The user enters credentials.
+                Azure AD then shows a <strong>consent screen</strong>.
+                The user approves the consent to allow the application to read their identity.
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-arrow">↓ User approves consent → Azure AD returns code + ID Token</div>
+
+          <div class="fstep fstep-oidc">
+            <div class="sn sn-purple">4</div>
+            <div class="fstep-body">
+              <div class="fstep-title"><span class="a-az">Azure AD Authorize Endpoint</span> → <span class="a-app">Application</span>: Returns ID Token + code</div>
+              <div class="fstep-detail">
+                Because <code>response_type=code id_token</code> was requested, Azure AD returns
+                <strong>two things</strong> to the application:
+                <br><br>
+                <strong>① ID Token</strong> — a signed JWT containing <em>User Claims</em>
+                (name, email, object ID, tenant, etc.). This is what proves who the user is.
+                The application reads the ID Token immediately to establish the user's identity.<br><br>
+                <strong>② Authorization Code</strong> — same as OAuth 2.0. Used in the next step
+                to get an Access Token.
+              </div>
+            </div>
+          </div>
+
+          <div class="fstep fstep-oidc" id="id-token">
+            <div class="sn sn-purple">5</div>
+            <div class="fstep-body">
+              <div class="fstep-title"><span class="a-app">Application</span>: Reads the ID Token — user is authenticated</div>
+              <div class="fstep-detail">
+                The application validates and reads the <strong>ID Token</strong>.
+                The ID Token is a JWT — it contains signed <strong>user claims</strong>
+                such as name, email, and unique user ID. This is the OpenID Connect
+                authentication step: the application now knows <em>who</em> is logged in.
+                No further call is needed to verify identity.
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-arrow">↓ Application sends authorization code to Token Endpoint to get Access Token</div>
+
+          <div class="fstep fstep-oidc">
+            <div class="sn sn-purple">6</div>
+            <div class="fstep-body">
+              <div class="fstep-title"><span class="a-app">Application</span> → <span class="a-az">Azure AD Token Endpoint</span>: Exchange code for Access Token</div>
+              <div class="fstep-detail">
+                The application POSTs the authorization code to the Token Endpoint
+                (same as OAuth 2.0 step 5) to obtain an <strong>Access Token</strong>
+                for calling APIs.
+              </div>
+            </div>
+          </div>
+
+          <div class="fstep fstep-oidc">
+            <div class="sn sn-purple">7</div>
+            <div class="fstep-body">
+              <div class="fstep-title"><span class="a-az">Azure AD Token Endpoint</span> → <span class="a-app">Application</span>: Returns Access Token</div>
+              <div class="fstep-detail">
+                Azure AD returns an <strong>Access Token</strong>.
+                The application now has both the user's <strong>identity</strong> (from the ID Token)
+                and the <strong>permission to call APIs</strong> (from the Access Token).
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- OIDC params table -->
+      <div class="subsection-title">OpenID Connect — Parameter Reference</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead class="thead-oidc">
+            <tr><th>Parameter</th><th>Value</th><th>What it means</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>client_id</code></td>
+              <td><code>673121de76-14a6-49ae-97bc-6eba6914391e</code></td>
+              <td>The registered application's ID in Azure AD</td>
+            </tr>
+            <tr>
+              <td><code>response_type</code></td>
+              <td><code>code id_token</code></td>
+              <td>
+                Requests <strong>both</strong> an authorization code <em>and</em> an ID Token from the
+                Authorize Endpoint. This is what distinguishes OIDC from plain OAuth 2.0
+                (<code>response_type=code</code>).
+              </td>
+            </tr>
+            <tr>
+              <td><code>redirect_uri</code></td>
+              <td><code>http://localhost/</code></td>
+              <td>Where Azure AD sends the response. Must be pre-registered in the app.</td>
+            </tr>
+            <tr>
+              <td><code>scope</code></td>
+              <td><code>openid</code></td>
+              <td>
+                <strong>Mandatory for OpenID Connect.</strong> Tells Azure AD to include an ID Token
+                in the response. The V2.0 endpoint requires scopes to be explicitly specified.
+              </td>
+            </tr>
+            <tr>
+              <td><code>id_token</code></td>
+              <td>JWT (signed)</td>
+              <td>
+                Returned from the Authorize Endpoint alongside the code. Contains
+                <strong>user claims</strong> (name, email, object ID, tenant ID, etc.).
+                Used to verify the identity of the user. This is the core of OpenID Connect
+                as an Authentication Protocol.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         COMPARISON
+    ════════════════════════════════════════════════════ -->
+    <section class="section" id="comparison">
+      <div class="section-title">OAuth 2.0 vs OpenID Connect — Comparison</div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead class="thead-navy">
+            <tr><th>Aspect</th><th>OAuth 2.0 (Auth Code)</th><th>OAuth 2.0 (Client Credentials)</th><th>OpenID Connect</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Purpose</strong></td>
+              <td>Get Access Token on behalf of a user</td>
+              <td>Get Access Token for a service (no user)</td>
+              <td>Authenticate user identity + get Access Token</td>
+            </tr>
+            <tr>
+              <td><strong>User involved?</strong></td>
+              <td>Yes — user signs in</td>
+              <td>No — service/daemon only</td>
+              <td>Yes — user signs in</td>
+            </tr>
+            <tr>
+              <td><strong>Authorize Endpoint used?</strong></td>
+              <td>Yes</td>
+              <td>No</td>
+              <td>Yes</td>
+            </tr>
+            <tr>
+              <td><strong>Token Endpoint used?</strong></td>
+              <td>Yes</td>
+              <td>Yes (only this endpoint)</td>
+              <td>Yes</td>
+            </tr>
+            <tr>
+              <td><strong>response_type</strong></td>
+              <td><code>code</code></td>
+              <td>Not applicable</td>
+              <td><code>code id_token</code></td>
+            </tr>
+            <tr>
+              <td><strong>scope</strong></td>
+              <td><code>https://graph.microsoft.com/User.Read</code></td>
+              <td><code>https://graph.microsoft.com/.default</code></td>
+              <td><code>openid</code></td>
+            </tr>
+            <tr>
+              <td><strong>grant_type</strong></td>
+              <td><code>authorization_code</code></td>
+              <td><code>client_credentials</code></td>
+              <td><code>authorization_code</code></td>
+            </tr>
+            <tr>
+              <td><strong>Returns</strong></td>
+              <td>Access Token</td>
+              <td>Access Token</td>
+              <td>ID Token + User Claims + Access Token</td>
+            </tr>
+            <tr>
+              <td><strong>User identity known?</strong></td>
+              <td>No</td>
+              <td>No</td>
+              <td>Yes — from ID Token</td>
+            </tr>
+            <tr>
+              <td><strong>Client Secret required?</strong></td>
+              <td>Yes (at Token Endpoint)</td>
+              <td>Yes (required parameter)</td>
+              <td>Yes (at Token Endpoint)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         PARAMETERS REFERENCE
+    ════════════════════════════════════════════════════ -->
+    <section class="section" id="params">
+      <div class="section-title">Parameters Reference</div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead class="thead-navy">
+            <tr><th>Parameter</th><th>Sent To</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>client_id</code></td>
+              <td>Both endpoints</td>
+              <td>Unique ID of the app registered in Azure AD. Identifies which application is making the request.</td>
+            </tr>
+            <tr>
+              <td><code>response_type</code></td>
+              <td>Authorize Endpoint</td>
+              <td><code>code</code> for OAuth 2.0 — returns an authorization code. <code>code id_token</code> for OIDC — returns code AND ID Token.</td>
+            </tr>
+            <tr>
+              <td><code>redirect_uri</code></td>
+              <td>Authorize Endpoint</td>
+              <td>The URL Azure AD redirects to with the code/token after login. Must be pre-registered in the app.</td>
+            </tr>
+            <tr>
+              <td><code>scope</code></td>
+              <td>Both endpoints</td>
+              <td>Permissions requested. <code>User.Read</code> for OAuth 2.0 Graph access. <code>openid</code> for OIDC. <code>.default</code> for Client Credentials.</td>
+            </tr>
+            <tr>
+              <td><code>code</code></td>
+              <td>Token Endpoint</td>
+              <td>The one-time authorization code returned from the Authorize Endpoint. Exchanged for tokens.</td>
+            </tr>
+            <tr>
+              <td><code>grant_type</code></td>
+              <td>Token Endpoint</td>
+              <td>Specifies which OAuth 2.0 flow is being used: <code>authorization_code</code> or <code>client_credentials</code>.</td>
+            </tr>
+            <tr>
+              <td><code>client_secret</code></td>
+              <td>Token Endpoint</td>
+              <td>The application's secret key — authenticates the application to Azure AD. Required for both Authorization Code and Client Credentials flows.</td>
+            </tr>
+            <tr>
+              <td><code>id_token</code></td>
+              <td>Returned in OIDC response</td>
+              <td>A signed JWT returned by the Authorize Endpoint (OIDC only). Contains user claims. Used to verify the user's identity.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+</body>
+</html>
