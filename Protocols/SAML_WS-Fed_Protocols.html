@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAML & WS-Fed Protocol Documentation</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+      font-size: 14px;
+      color: #1f2d3d;
+      background: #f0f2f5;
+      line-height: 1.6;
+    }
+
+    /* ── LAYOUT ── */
+    .layout { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 240px;
+      flex-shrink: 0;
+      background: #1a3560;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 28px 0 40px;
+    }
+
+    .sidebar-title {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #93c5fd;
+      padding: 0 20px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 10px;
+    }
+
+    .nav-group { margin-bottom: 4px; }
+
+    .nav-group-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #ff9900;
+      padding: 10px 20px 4px;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 6px 20px 6px 28px;
+      font-size: 12.5px;
+      color: #cbd5e1;
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .sidebar a:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.07);
+      border-left-color: #ff9900;
+    }
+
+    .content {
+      flex: 1;
+      padding: 36px 44px 60px;
+      max-width: 960px;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #1a3560 0%, #1e4d8c 100%);
+      color: #fff;
+      border-radius: 8px;
+      padding: 32px 36px;
+      margin-bottom: 36px;
+    }
+
+    .hero h1 {
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      letter-spacing: -0.3px;
+    }
+
+    .hero p {
+      font-size: 13.5px;
+      color: #bfdbfe;
+      line-height: 1.7;
+      max-width: 720px;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-saml { background: #ff9900; color: #1a1a1a; }
+    .badge-wsfed { background: #3b82f6; color: #fff; }
+
+    /* ── SECTION ── */
+    .section { margin-bottom: 40px; }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #1a3560;
+      border-left: 5px solid #1a3560;
+      padding-left: 14px;
+      margin-bottom: 18px;
+    }
+
+    .subsection-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e4d8c;
+      margin: 20px 0 10px;
+      padding-bottom: 5px;
+      border-bottom: 1px dashed #c7d8f0;
+    }
+
+    p { margin-bottom: 10px; color: #374151; }
+
+    /* ── CALLOUT ── */
+    .callout {
+      background: #fffbeb;
+      border: 1px solid #f59e0b;
+      border-left: 4px solid #f59e0b;
+      border-radius: 5px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      font-size: 13.5px;
+      color: #78350f;
+      font-style: italic;
+    }
+
+    .callout-blue {
+      background: #eff6ff;
+      border: 1px solid #93c5fd;
+      border-left: 4px solid #2563eb;
+      border-radius: 5px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      font-size: 13.5px;
+      color: #1e3a5f;
+    }
+
+    /* ── TABLES ── */
+    .tbl-wrap { overflow-x: auto; margin-bottom: 18px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: 6px;
+      overflow: hidden;
+      font-size: 13px;
+    }
+
+    thead tr { background: #1a3560; color: #fff; }
+    thead th { padding: 11px 14px; text-align: left; font-weight: 700; letter-spacing: 0.3px; }
+
+    tbody tr:nth-child(even) { background: #f8f9fb; }
+    tbody tr:nth-child(odd)  { background: #fff; }
+    tbody tr:hover           { background: #eef3fb; }
+
+    tbody td { padding: 10px 14px; border-bottom: 1px solid #e5e9f0; vertical-align: top; }
+
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      background: #1a3560;
+      color: #fff;
+      border-radius: 50%;
+      font-size: 11.5px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .actor-sp    { color: #7c3aed; font-weight: 600; }
+    .actor-idp   { color: #059669; font-weight: 600; }
+    .actor-user  { color: #2563eb; font-weight: 600; }
+    .actor-sts   { color: #059669; font-weight: 600; }
+    .actor-rp    { color: #7c3aed; font-weight: 600; }
+
+    /* ── FLOW DIAGRAM ── */
+    .flow-diagram {
+      background: #fff;
+      border: 1px solid #e5e9f0;
+      border-radius: 8px;
+      padding: 24px 20px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+    }
+
+    .lanes {
+      display: flex;
+      gap: 0;
+      min-width: 560px;
+    }
+
+    .lane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .lane-header {
+      width: 100%;
+      text-align: center;
+      padding: 8px 6px;
+      border-radius: 6px 6px 0 0;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0;
+    }
+
+    .lane-header.user  { background: #2563eb; }
+    .lane-header.sp    { background: #7c3aed; }
+    .lane-header.idp   { background: #059669; }
+    .lane-header.sts   { background: #059669; }
+    .lane-header.rp    { background: #7c3aed; }
+
+    .lane-body {
+      width: 2px;
+      background: #d1d5db;
+      flex: 1;
+      min-height: 20px;
+    }
+
+    .flow-steps { margin-top: 16px; }
+
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+      background: #f8faff;
+      border: 1px solid #e0e8f5;
+      border-radius: 6px;
+      padding: 10px 14px;
+    }
+
+    .flow-step-content { flex: 1; }
+
+    .flow-step-title {
+      font-weight: 700;
+      font-size: 13px;
+      color: #1a3560;
+      margin-bottom: 3px;
+    }
+
+    .flow-step-detail {
+      font-size: 12.5px;
+      color: #4b5563;
+      line-height: 1.55;
+    }
+
+    .flow-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #6b7280;
+      margin: 4px 0 8px 38px;
+      font-style: italic;
+    }
+
+    /* ── CODE BLOCK ── */
+    .code-block {
+      background: #1e1e2e;
+      border-radius: 6px;
+      padding: 16px 18px;
+      margin-bottom: 18px;
+      overflow-x: auto;
+    }
+
+    .code-block pre {
+      font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #cdd6f4;
+      white-space: pre;
+    }
+
+    .xml-tag   { color: #89b4fa; }
+    .xml-attr  { color: #89dceb; }
+    .xml-val   { color: #a6e3a1; }
+    .xml-cmt   { color: #6c7086; font-style: italic; }
+    .xml-url   { color: #fab387; }
+
+    /* ── COMPARISON GRID ── */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .compare-card {
+      border-radius: 7px;
+      padding: 18px 20px;
+    }
+
+    .compare-card.saml  { background: #fff8ec; border: 1px solid #f59e0b; }
+    .compare-card.wsfed { background: #eff6ff; border: 1px solid #93c5fd; }
+
+    .compare-card h3 {
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .compare-card.saml  h3 { color: #b45309; }
+    .compare-card.wsfed h3 { color: #1d4ed8; }
+
+    .compare-card ul { padding-left: 18px; }
+    .compare-card ul li { font-size: 12.5px; color: #374151; margin-bottom: 5px; }
+
+    /* ── AUTH METHOD TABLE ── */
+    .auth-method-tag {
+      display: inline-block;
+      background: #1e1e2e;
+      color: #a6e3a1;
+      font-family: 'Consolas', monospace;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      word-break: break-all;
+      line-height: 1.5;
+    }
+
+    /* ── HIGHLIGHT ── */
+    .hl-orange { color: #d97706; font-weight: 700; }
+    .hl-blue   { color: #2563eb; font-weight: 700; }
+    .hl-green  { color: #059669; font-weight: 700; }
+    .hl-purple { color: #7c3aed; font-weight: 700; }
+
+    /* ── PRINT ── */
+    @media print {
+      .sidebar { display: none; }
+      .content { padding: 20px 30px; max-width: 100%; }
+      .hero { background: #1a3560 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .lane-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────── -->
+  <nav class="sidebar">
+    <div class="sidebar-title">Protocol Docs</div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Overview</div>
+      <a href="#federation">What is Federation?</a>
+      <a href="#how-it-works">How Protocols Work</a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">WS-Fed</div>
+      <a href="#wsfed-overview">Overview</a>
+      <a href="#wsfed-flow">Request Flow</a>
+      <a href="#wsfed-params">URL Parameters</a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">SAML</div>
+      <a href="#saml-overview">Overview</a>
+      <a href="#saml-flow">Request Flow</a>
+      <a href="#saml-params">URL Parameters</a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Reference</div>
+      <a href="#sample-requests">Sample Requests</a>
+      <a href="#auth-methods">Auth Methods</a>
+      <a href="#response">Response / RSTR</a>
+      <a href="#comparison">SAML vs WS-Fed</a>
+    </div>
+  </nav>
+
+  <!-- ── MAIN CONTENT ─────────────────────────────────────── -->
+  <main class="content">
+
+    <!-- HERO -->
+    <div class="hero">
+      <h1>SAML &amp; WS-Federation Protocols</h1>
+      <p>
+        A complete reference for how SAML 2.0 and WS-Federation authentication protocols work —
+        covering federation concepts, end-to-end request flows, URL parameters, authentication methods,
+        and token responses, with real ADFS / Azure AD examples.
+      </p>
+      <div class="badge-row">
+        <span class="badge badge-saml">SAML 2.0</span>
+        <span class="badge badge-wsfed">WS-Federation</span>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         SECTION 1 — FEDERATION
+    ═══════════════════════════════════════════════════════ -->
+    <section class="section" id="federation">
+      <div class="section-title">What is Federation?</div>
+
+      <div class="callout">
+        "Access to protected resources can be granted to 'security principals' existing in different realms."
+      </div>
+
+      <p>
+        Federation is the mechanism that allows a user authenticated in one domain (realm) to access
+        resources in a completely different domain — without needing a separate account or re-entering
+        credentials. The two domains establish a <strong>trust relationship</strong>, and identity is
+        communicated via a token containing <strong>claims</strong>.
+      </p>
+
+      <div class="subsection-title">Core Components</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>In WS-Fed</th>
+              <th>In SAML</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Identity Store</strong></td>
+              <td>ADFS / Azure AD</td>
+              <td>Identity Provider (IdP)</td>
+              <td>Validates the user's credentials and issues a security token containing claims</td>
+            </tr>
+            <tr>
+              <td><strong>Application</strong></td>
+              <td>Relying Party (RP)</td>
+              <td>Service Provider (SP)</td>
+              <td>The protected resource that trusts the identity store and grants access based on the token</td>
+            </tr>
+            <tr>
+              <td><strong>Security Principal</strong></td>
+              <td colspan="2">User / Browser / Service</td>
+              <td>The entity requesting access — identified by claims</td>
+            </tr>
+            <tr>
+              <td><strong>Claims</strong></td>
+              <td colspan="2">Name, Email, Contact Number, Address, Groups…</td>
+              <td>Attributes about the security principal, carried inside the token</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout-blue">
+        <strong>Key principle:</strong> The Application never sees the user's password. It only receives a
+        signed token from the trusted Identity Provider. The trust is configured once at the infrastructure
+        level (Relying Party Trust in ADFS / Enterprise Application in Azure AD).
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         SECTION 2 — HOW PROTOCOLS WORK
+    ═══════════════════════════════════════════════════════ -->
+    <section class="section" id="how-it-works">
+      <div class="section-title">How the Protocols Work</div>
+
+      <p>
+        <strong class="hl-orange">WS-Fed</strong> and <strong class="hl-blue">SAML</strong> are both
+        federation protocols that enable an Application and an Identity Provider to communicate.
+        They differ in message format, URL structure, and token version — but share the same
+        fundamental flow.
+      </p>
+
+      <div class="subsection-title">Core Mechanism (Both Protocols)</div>
+      <div class="flow-diagram">
+        <div class="lanes">
+          <div class="lane">
+            <div class="lane-header user">Browser / User</div>
+            <div class="lane-body"></div>
+          </div>
+          <div class="lane">
+            <div class="lane-header rp">Application (SP / RP)</div>
+            <div class="lane-body"></div>
+          </div>
+          <div class="lane">
+            <div class="lane-header idp">ADFS / Azure AD (IdP / STS)</div>
+            <div class="lane-body"></div>
+          </div>
+        </div>
+        <div class="flow-steps">
+
+          <div class="flow-step">
+            <div class="step-num">1</div>
+            <div class="flow-step-content">
+              <div class="flow-step-title"><span class="actor-user">User</span> navigates to the application</div>
+              <div class="flow-step-detail">
+                User opens browser and goes to <code>https://application.com</code>.
+                The application checks: <em>"Is this user already authenticated?"</em>
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-arrow">↓ No active session found</div>
+
+          <div class="flow-step">
+            <div class="step-num">2</div>
+            <div class="flow-step-content">
+              <div class="flow-step-title"><span class="actor-rp">Application</span> redirects to the Identity Provider</div>
+              <div class="flow-step-detail">
+                The application detects no authenticated session and sends an
+                <strong>HTTP 302 redirect</strong> to a specific endpoint of ADFS / Azure AD.
+                The redirect URL includes protocol-specific parameters (see WS-Fed and SAML sections below)
+                that tell the IdP: <em>who is asking, what app, and what authentication method to use.</em>
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-arrow">↓ Browser follows redirect to IdP</div>
+
+          <div class="flow-step">
+            <div class="step-num">3</div>
+            <div class="flow-step-content">
+              <div class="flow-step-title"><span class="actor-idp">ADFS / Azure AD</span> authenticates the user</div>
+              <div class="flow-step-detail">
+                The IdP presents a login page (or performs Windows Integrated Auth / MFA / Certificate auth
+                silently). The user submits credentials. ADFS / Azure AD validates them against Active Directory
+                or its user store.
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-arrow">↓ Authentication successful → SOAP request/response encoded in HTTPS</div>
+
+          <div class="flow-step">
+            <div class="step-num">4</div>
+            <div class="flow-step-content">
+              <div class="flow-step-title"><span class="actor-idp">ADFS / Azure AD</span> issues a security token (RSTR)</div>
+              <div class="flow-step-detail">
+                The IdP generates a signed security token — a
+                <strong>Request Security Token Response (RSTR)</strong> — containing the user's claims
+                (Name, Email, Groups, etc.). The token is embedded in an HTML auto-submit form and
+                POSTed back to the application's endpoint via the browser.
+                <br><br>
+                <strong class="hl-orange">WS-Fed</strong> returns a <strong>SAML 1.0</strong> token. &nbsp;
+                <strong class="hl-blue">SAML</strong> returns a <strong>SAML 2.0</strong> assertion.
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-arrow">↓ Browser auto-POSTs token to application</div>
+
+          <div class="flow-step">
+            <div class="step-num">5</div>
+            <div class="flow-step-content">
+              <div class="flow-step-title"><span class="actor-rp">Application</span> validates the token and grants access</div>
+              <div class="flow-step-detail">
+                The application receives and validates the signed token (checks signature, issuer, audience,
+                expiry). If valid, it establishes a local session and grants the user access.
+                The user is now logged in without ever sending their password to the application.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         SECTION 3 — WS-FEDERATION
+    ═══════════════════════════════════════════════════════ -->
+    <section class="section" id="wsfed-overview">
+      <div class="section-title">WS-Federation</div>
+
+      <p>
+        WS-Federation is part of the <strong>WS-* (Web Services)</strong> family of standards,
+        developed by Microsoft and IBM. It is the native federation protocol used by
+        <strong>ADFS (Active Directory Federation Services)</strong> and supported by Azure AD.
+        It primarily targets browser-based SSO scenarios (Passive Requestor Profile) and
+        rich-client / service scenarios (Active Requestor Profile via WS-Trust SOAP).
+      </p>
+
+      <div class="compare-card wsfed" style="margin-bottom:18px;">
+        <h3>WS-Federation Key Facts</h3>
+        <ul>
+          <li>Protocol family: WS-* (WS-Federation 1.1 / 1.2)</li>
+          <li>Common Identity Provider: <strong>ADFS, Azure AD / Entra ID</strong></li>
+          <li>Token issued: <strong>SAML 1.0</strong> (wrapped in RSTR)</li>
+          <li>Transport: HTTPS with SOAP for Active Profile; HTTP redirect/POST for Passive Profile</li>
+          <li>Common applications: SharePoint, Exchange, Office 365 (legacy), custom .NET apps</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section" id="wsfed-flow">
+      <div class="section-title">WS-Federation — Request Flow</div>
+
+      <div class="subsection-title">Passive Requestor Profile (Browser-Based SSO)</div>
+
+      <div class="flow-diagram">
+        <div class="lanes">
+          <div class="lane"><div class="lane-header user">Browser / User</div><div class="lane-body"></div></div>
+          <div class="lane"><div class="lane-header rp">Relying Party (RP)</div><div class="lane-body"></div></div>
+          <div class="lane"><div class="lane-header sts">STS — ADFS / Azure AD</div><div class="lane-body"></div></div>
+        </div>
+        <div class="flow-steps">
+
+          <div class="flow-step">
+            <div class="step-num">1</div>
+            <div class="flow-step-content">
+              <div class="flow-step-title"><span class="actor-user">User</span> → <span class="actor-rp">Relying Party</span>: Access request</div>
+              <div class="flow-step-detail">
+                User navigates to <code>https://application.com</code>. The RP finds no session cookie.
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-step">
+            <div class="step-num">2</div>
+            <div class="flow-step-content">
+              <div class="flow-step-title"><span class="actor-rp">Relying Party</span> → <span class="actor-user">Browser</span>: HTTP 302 redirect to STS</div>
+              <div class="flow-step-detail">
+                The RP redirects the browser to the ADFS / Azure AD WS-Fed endpoint with these parameters:
+              </div>
+            </div>
+          </div>
+
+          <div style="margin: 0 0 12px 38px;">
+            <div class="code-block">
+              <pre><span class="xml-url">https://sts.conceptswork.com/adfs/ls/</span>
+  <span class="xml-attr">?wa</span>=<span class="xml-val">wsignin1.0</span>
+  <span class="xml-attr">&amp;wtrealm</span>=<span class="xml-val">urn:microsoft:adfs:claimsxray</span>
+  <span class="xml-attr">&amp;wauth</span>=<span class="xml-val">urn:oasis:names:tc:SAML-1.0:am:password</span>
+  <span class="xml-attr">&amp;wreply</span>=<span class="xml-val">https://application.com/auth/callback</span>
+  <span class="xml-attr">&amp;wctx</span>=<span class="xml-val">originalUrl%3D%2Fdashboard</span></pre>
+            </div>
+          </div>
+
+          <div class="flow-step">
+            <div class="step-num">3</div>
+            <div class="flow-step-content">
+              <div class="flow-step-title"><span class="actor-sts">STS</span>: Authenticates the user</div>
+              <div class="flow-step-detail">
+                ADFS / Azure AD receives the request. It reads <code>wtrealm</code> to look up the
+                Relying Party Trust configuration. It then challenges the user for credentials using
+                the method specified in <code>wauth</code> (password form, Windows auth, certificate, MFA).
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-step">
+            <div class="step-num">4</div>
+            <div class="flow-step-content">
+              <div class="flow-step-title"><span class="actor-sts">STS</span>: Issues SAML 1.0 token (RSTR)</div>
+              <div class="flow-step-detail">
+                After successful authentication, the STS builds a
+                <strong>RequestSecurityTokenResponse (RSTR)</strong> containing a signed
+                <strong>SAML 1.0 token</strong> with the user's claims. It wraps this in an
+                HTML page with a hidden form field named <code>wresult</code>.
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-step">
+            <div class="step-num">5</div>
+            <div class="flow-step-content">
+              <div class="flow-step-title"><span class="actor-user">Browser</span> → <span class="actor-rp">Relying Party</span>: Auto-POST token</div>
+              <div class="flow-step-detail">
+                The browser auto-submits the form (via JavaScript) to the RP's
+                <code>wreply</code> endpoint. The POST body contains:
+                <br><code>wa=wsignin1.0&amp;wresult=&lt;RSTR with SAML 1.0 token&gt;&amp;wctx=...</code>
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-step">
+            <div class="step-num">6</div>
+            <div class="flow-step-content">
+              <div class="flow-step-title"><span class="actor-rp">Relying Party</span>: Validates token &amp; grants access</div>
+              <div class="flow-step-detail">
+                The RP validates the SAML 1.0 token signature, issuer, audience restriction, and
+                token expiry. On success, it creates a local session and redirects the user to the
+                originally requested resource.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="wsfed-params">
+      <div class="section-title">WS-Federation — URL Parameters</div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Parameter</th>
+              <th>Full Name</th>
+              <th>Purpose</th>
+              <th>Example Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>wa</code></td>
+              <td>Web Action</td>
+              <td>Specifies the action — always <code>wsignin1.0</code> for sign-in</td>
+              <td><span class="auth-method-tag">wsignin1.0</span></td>
+            </tr>
+            <tr>
+              <td><code>wtrealm</code></td>
+              <td>Web Realm (Relying Party Identifier)</td>
+              <td>
+                Identifies which Relying Party is making the request. Must match exactly what is
+                configured in the Relying Party Trust on ADFS / Azure AD.
+                This value <strong>never changes</strong> — it is saved in the RP trust configuration.
+              </td>
+              <td><span class="auth-method-tag">urn:microsoft:adfs:claimsxray</span></td>
+            </tr>
+            <tr>
+              <td><code>wreply</code></td>
+              <td>Web Reply URL</td>
+              <td>The callback URL on the RP where the STS will POST the token response</td>
+              <td><span class="auth-method-tag">https://app.com/auth/wsfed</span></td>
+            </tr>
+            <tr>
+              <td><code>wauth</code></td>
+              <td>Web Auth (Authentication Method)</td>
+              <td>
+                Requests a specific authentication method from the STS.
+                See the Authentication Methods table for all values.
+              </td>
+              <td><span class="auth-method-tag">urn:oasis:names:tc:SAML-1.0:am:password</span></td>
+            </tr>
+            <tr>
+              <td><code>wctx</code></td>
+              <td>Web Context</td>
+              <td>Opaque context value passed through by the STS unchanged — used by the RP to restore state after login (e.g., original URL)</td>
+              <td><span class="auth-method-tag">originalUrl%3D%2Fdashboard</span></td>
+            </tr>
+            <tr>
+              <td><code>wresult</code></td>
+              <td>Web Result</td>
+              <td>The RSTR (token response) POSTed back to the RP by the browser. Contains the SAML 1.0 token.</td>
+              <td><span class="auth-method-tag">&lt;RequestSecurityTokenResponse&gt;…&lt;/&gt;</span></td>
+            </tr>
+            <tr>
+              <td><code>whr</code></td>
+              <td>Web Home Realm</td>
+              <td>Hints to the STS which home realm/IdP the user belongs to — skips the realm discovery page</td>
+              <td><span class="auth-method-tag">urn:federation:MicrosoftOnline</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout-blue">
+        <strong>Identity Provider Endpoint (ADFS):</strong><br>
+        WS-Fed sign-in endpoint: <code>https://sts.conceptswork.com/adfs/ls/</code><br>
+        Azure AD WS-Fed endpoint: <code>https://login.microsoftonline.com/&lt;tenant-id&gt;/wsfed</code>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         SECTION 4 — SAML
+    ═══════════════════════════════════════════════════════ -->
+    <section class="section" id="saml-overview">
+      <div class="section-title">SAML 2.0</div>
+
+      <p>
+        SAML (Security Assertion Markup Language) is an open standard developed by
+        <strong>OASIS</strong>. Version 2.0 is the dominant standard for enterprise web SSO today.
+        It uses XML-based assertions to communicate identity information between an
+        <strong>Identity Provider (IdP)</strong> and a <strong>Service Provider (SP)</strong>.
+      </p>
+
+      <div class="compare-card saml" style="margin-bottom:18px;">
+        <h3>SAML 2.0 Key Facts</h3>
+        <ul>
+          <li>Standard body: OASIS (Security Assertion Markup Language 2.0)</li>
+          <li>Common Identity Provider: <strong>ADFS, Azure AD / Entra ID, Okta, Ping</strong></li>
+          <li>Token issued: <strong>SAML 2.0 Assertion</strong> (XML)</li>
+          <li>Transport: HTTP Redirect (AuthnRequest) + HTTP POST (SAMLResponse)</li>
+          <li>Common applications: Salesforce, ServiceNow, AWS, any SAML SP-capable app</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section" id="saml-flow">
+      <div class="section-title">SAML 2.0 — Request Flow</div>
+
+      <div class="subsection-title">IdP-Initiated SSO Flow (ADFS)</div>
+      <p>
+        In the ADFS / Azure AD context, the SAML flow is commonly <strong>IdP-Initiated</strong> —
+        the IdP begins the flow by sending the user directly to the SP with a pre-built assertion.
+        This is triggered via the <code>IdpInitiatedSignOn</code> endpoint.
+      </p>
+
+      <div class="flow-diagram">
+        <div class="lanes">
+          <div class="lane"><div class="lane-header user">Browser / User</div><div class="lane-body"></div></div>
+          <div class="lane"><div class="lane-header sp">Service Provider (SP)</div><div class="lane-body"></div></div>
+          <div class="lane"><div class="lane-header idp">IdP — ADFS / Azure AD</div><div class="lane-body"></div></div>
+        </div>
+        <div class="flow-steps">
+
+          <div class="flow-step">
+            <div class="step-num">1</div>
+            <div class="flow-step-content">
+              <div class="flow-step-title"><span class="actor-user">User</span> → <span class="actor-sp">SP</span>: Access request</div>
+              <div class="flow-step-detail">User navigates to <code>https://application.com</code>. The SP detects no active session.</div>
+            </div>
+          </div>
+
+          <div class="flow-step">
+            <div class="step-num">2</div>
+            <div class="flow-step-content">
+              <div class="flow-step-title"><span class="actor-sp">SP</span> → <span class="actor-user">Browser</span>: HTTP 302 redirect to IdP (IdpInitiatedSignOn)</div>
+              <div class="flow-step-detail">
+                The SP redirects the browser to the ADFS SAML endpoint:
+              </div>
+            </div>
+          </div>
+
+          <div style="margin: 0 0 12px 38px;">
+            <div class="code-block">
+              <pre><span class="xml-url">https://sts.conceptswork.com/adfs/ls/IdpInitiatedSignOn</span>
+  <span class="xml-attr">?LoginToRP</span>=<span class="xml-val">urn:microsoft:adfs:claimsxray</span>
+  <span class="xml-attr">&amp;RequestedAuthenticationContext</span>=<span class="xml-val">urn:oasis:names:tc:SAML-2.0:ac:classes:Password</span></pre>
+            </div>
+          </div>
+
+          <div class="flow-step">
+            <div class="step-num">3</div>
+            <div class="flow-step-content">
+              <div class="flow-step-title"><span class="actor-idp">IdP</span>: Looks up Relying Party Trust &amp; authenticates user</div>
+              <div class="flow-step-detail">
+                ADFS reads <code>LoginToRP</code> to find the matching Relying Party Trust (same identifier
+                configured during trust setup). It then authenticates the user using the method
+                specified in <code>RequestedAuthenticationContext</code>.
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-step">
+            <div class="step-num">4</div>
+            <div class="flow-step-content">
+              <div class="flow-step-title"><span class="actor-idp">IdP</span>: Generates &amp; signs SAML 2.0 Assertion</div>
+              <div class="flow-step-detail">
+                After authentication succeeds, ADFS builds a signed XML <strong>SAMLResponse</strong>
+                containing a <strong>SAML 2.0 Assertion</strong> with the user's claims. The response
+                is base64-encoded and embedded in an HTML form.
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-step">
+            <div class="step-num">5</div>
+            <div class="flow-step-content">
+              <div class="flow-step-title"><span class="actor-user">Browser</span> → <span class="actor-sp">SP</span>: Auto-POST SAMLResponse</div>
+              <div class="flow-step-detail">
+                The browser auto-submits the form to the SP's Assertion Consumer Service (ACS) URL.
+                POST body: <code>SAMLResponse=&lt;base64-encoded XML assertion&gt;</code>
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-step">
+            <div class="step-num">6</div>
+            <div class="flow-step-content">
+              <div class="flow-step-title"><span class="actor-sp">SP</span>: Validates assertion &amp; grants access</div>
+              <div class="flow-step-detail">
+                The SP decodes the SAMLResponse, verifies the XML signature against the IdP's certificate,
+                checks the audience restriction, validates NotBefore/NotOnOrAfter conditions, then creates
+                a session and grants access.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="subsection-title">SP-Initiated SSO Flow</div>
+      <p>In SP-Initiated flow, the SP generates an <strong>AuthnRequest</strong> and sends it to the IdP via an HTTP Redirect.</p>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Actor</th><th>Action</th><th>Technical Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="step-num">1</span></td>
+              <td><span class="actor-user">User</span></td>
+              <td>Accesses SP</td>
+              <td>Navigates to <code>https://application.com</code> — no session exists</td>
+            </tr>
+            <tr>
+              <td><span class="step-num">2</span></td>
+              <td><span class="actor-sp">SP</span></td>
+              <td>Generates AuthnRequest</td>
+              <td>SP creates a signed XML <code>&lt;AuthnRequest&gt;</code>, base64 + URL-encodes it, and sends HTTP 302 redirect to the IdP's SSO URL with <code>SAMLRequest=…</code></td>
+            </tr>
+            <tr>
+              <td><span class="step-num">3</span></td>
+              <td><span class="actor-idp">IdP</span></td>
+              <td>Parses AuthnRequest</td>
+              <td>Decodes and verifies the AuthnRequest, checks the Issuer matches a registered SP</td>
+            </tr>
+            <tr>
+              <td><span class="step-num">4</span></td>
+              <td><span class="actor-idp">IdP</span></td>
+              <td>Authenticates user</td>
+              <td>Presents login page or performs silent Windows/MFA auth per the RequestedAuthnContext</td>
+            </tr>
+            <tr>
+              <td><span class="step-num">5</span></td>
+              <td><span class="actor-idp">IdP</span></td>
+              <td>Issues SAMLResponse</td>
+              <td>Builds signed XML SAMLResponse with SAML 2.0 Assertion, base64-encodes it</td>
+            </tr>
+            <tr>
+              <td><span class="step-num">6</span></td>
+              <td><span class="actor-user">Browser</span></td>
+              <td>Auto-POSTs to ACS</td>
+              <td>Browser posts <code>SAMLResponse</code> to the SP's Assertion Consumer Service endpoint</td>
+            </tr>
+            <tr>
+              <td><span class="step-num">7</span></td>
+              <td><span class="actor-sp">SP</span></td>
+              <td>Validates &amp; grants access</td>
+              <td>Verifies signature, audience, time conditions → creates session → redirects to resource</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section" id="saml-params">
+      <div class="section-title">SAML 2.0 — URL Parameters</div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Parameter</th>
+              <th>Purpose</th>
+              <th>Example Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>LoginToRP</code></td>
+              <td>
+                <strong>Relying Party Identifier</strong> — Identifies which application the user wants to
+                access. Must match exactly the identifier configured in the Relying Party Trust.
+                This value <strong>never changes</strong> once configured.
+              </td>
+              <td><span class="auth-method-tag">urn:microsoft:adfs:claimsxray</span></td>
+            </tr>
+            <tr>
+              <td><code>RequestedAuthenticationContext</code></td>
+              <td>
+                Specifies the authentication method/class that the IdP must use.
+                Equivalent to WS-Fed's <code>wauth</code>.
+              </td>
+              <td><span class="auth-method-tag">urn:oasis:names:tc:SAML-2.0:ac:classes:Password</span></td>
+            </tr>
+            <tr>
+              <td><code>SAMLRequest</code></td>
+              <td>Base64 + URL-encoded, deflated XML <code>&lt;AuthnRequest&gt;</code> sent by SP to IdP in SP-initiated flow</td>
+              <td><span class="auth-method-tag">PHNhbWxwOkF1dGhuUmVxdWVzdC…</span></td>
+            </tr>
+            <tr>
+              <td><code>SAMLResponse</code></td>
+              <td>Base64-encoded XML <code>&lt;SAMLResponse&gt;</code> containing the signed SAML 2.0 Assertion POSTed back to the SP</td>
+              <td><span class="auth-method-tag">PHNhbWxwOlJlc3BvbnNlIHhtbG5z…</span></td>
+            </tr>
+            <tr>
+              <td><code>RelayState</code></td>
+              <td>Opaque value passed through by the IdP unchanged — equivalent to WS-Fed's <code>wctx</code>, used to restore original URL</td>
+              <td><span class="auth-method-tag">%2Fdashboard%3Ftab%3Dreports</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout-blue">
+        <strong>Identity Provider Endpoints (ADFS):</strong><br>
+        IdP-Initiated SAML: <code>https://sts.conceptswork.com/adfs/ls/IdpInitiatedSignOn</code><br>
+        SP-Initiated SAML ACS (ADFS): <code>https://sts.conceptswork.com/adfs/ls/</code><br>
+        Azure AD SAML endpoint: <code>https://login.microsoftonline.com/&lt;tenant-id&gt;/saml2</code>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         SECTION 5 — SAMPLE REQUESTS SIDE BY SIDE
+    ═══════════════════════════════════════════════════════ -->
+    <section class="section" id="sample-requests">
+      <div class="section-title">Sample Requests — WS-Fed vs SAML</div>
+
+      <div class="compare-grid">
+
+        <div class="compare-card wsfed">
+          <h3>WS-Federation Request</h3>
+          <div class="code-block" style="margin-top:10px;">
+            <pre style="font-size:11px;"><span class="xml-url">https://sts.conceptswork.com/adfs/ls/</span>
+<span class="xml-attr">?wa</span>=<span class="xml-val">wsignin1.0</span>
+<span class="xml-attr">&amp;wtrealm</span>=<span class="xml-val">urn:microsoft:adfs:claimsxray</span>
+<span class="xml-attr">&amp;wauth</span>=<span class="xml-val">urn:oasis:names:tc:SAML-1.0:am:password</span></pre>
+          </div>
+          <ul style="margin-top:8px;">
+            <li><strong>Endpoint:</strong> <code>/adfs/ls/</code></li>
+            <li><strong>RP Identifier param:</strong> <code>wtrealm</code></li>
+            <li><strong>Auth method param:</strong> <code>wauth</code></li>
+          </ul>
+        </div>
+
+        <div class="compare-card saml">
+          <h3>SAML Request</h3>
+          <div class="code-block" style="margin-top:10px;">
+            <pre style="font-size:11px;"><span class="xml-url">https://sts.conceptswork.com/adfs/ls/IdpInitiatedSignOn</span>
+<span class="xml-attr">?LoginToRP</span>=<span class="xml-val">urn:microsoft:adfs:claimsxray</span>
+<span class="xml-attr">&amp;RequestedAuthenticationContext</span>=
+  <span class="xml-val">urn:oasis:names:tc:SAML-2.0:ac:classes:Password</span></pre>
+          </div>
+          <ul style="margin-top:8px;">
+            <li><strong>Endpoint:</strong> <code>/adfs/ls/IdpInitiatedSignOn</code></li>
+            <li><strong>RP Identifier param:</strong> <code>LoginToRP</code></li>
+            <li><strong>Auth method param:</strong> <code>RequestedAuthenticationContext</code></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="callout-blue">
+        <strong>Relying Party Identifier — stays the same in both:</strong><br>
+        <code>wtrealm=urn:microsoft:adfs:claimsxray</code> &nbsp;/&nbsp; <code>LoginToRP=urn:microsoft:adfs:claimsxray</code><br><br>
+        This value is saved once in the Relying Party Trust configuration and never changes regardless of which protocol is used.
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         SECTION 6 — AUTHENTICATION METHODS
+    ═══════════════════════════════════════════════════════ -->
+    <section class="section" id="auth-methods">
+      <div class="section-title">Authentication Methods — Request Header Values</div>
+
+      <p>
+        Both protocols allow the application to specify <em>how</em> the user must authenticate
+        by including an authentication method parameter in the redirect URL.
+        WS-Fed uses <code>wauth</code>; SAML uses <code>RequestedAuthenticationContext</code>.
+      </p>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Authentication Type</th>
+              <th>WS-Fed (<code>wauth=</code>)</th>
+              <th>SAML (<code>RequestedAuthenticationContext=</code>)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Windows Authentication</strong><br><small>Kerberos / NTLM (silent, domain-joined)</small></td>
+              <td><span class="auth-method-tag">urn:federation:authentication:windows</span></td>
+              <td><span class="auth-method-tag">urn:oasis:names:tc:SAML:2.0:ac:classes:Kerberos</span></td>
+            </tr>
+            <tr>
+              <td><strong>Certificate Authentication</strong><br><small>Smart card / client certificate</small></td>
+              <td><span class="auth-method-tag">urn:ietf:rfc:2246</span></td>
+              <td><span class="auth-method-tag">urn:oasis:names:tc:SAML:2.0:ac:classes:X509</span></td>
+            </tr>
+            <tr>
+              <td><strong>Forms-Based Authentication</strong><br><small>Username &amp; password login form</small></td>
+              <td><span class="auth-method-tag">urn:oasis:names:tc:SAML:1.0:am:password</span></td>
+              <td><span class="auth-method-tag">urn:oasis:names:tc:SAML:2.0:ac:classes:Password</span></td>
+            </tr>
+            <tr>
+              <td><strong>MFA Authentication</strong><br><small>Multi-factor (Authenticator, OTP, etc.)</small></td>
+              <td><span class="auth-method-tag">http://schemas.microsoft.com/claims/multipleauthn</span></td>
+              <td><span class="auth-method-tag">http://schemas.microsoft.com/claims/multipleauthn</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         SECTION 7 — RESPONSE / RSTR
+    ═══════════════════════════════════════════════════════ -->
+    <section class="section" id="response">
+      <div class="section-title">Response — RSTR (Request Security Token Response)</div>
+
+      <p>
+        After the Identity Provider authenticates the user, it sends back a
+        <strong>Request Security Token Response (RSTR)</strong> containing the security token.
+        The key difference between WS-Fed and SAML is the <strong>token version</strong> inside the response.
+      </p>
+
+      <div class="compare-grid">
+        <div class="compare-card wsfed">
+          <h3>WS-Federation Response</h3>
+          <ul>
+            <li>Response type: <strong>RSTR (RequestSecurityTokenResponse)</strong></li>
+            <li>Token inside: <strong>SAML 1.0 Token</strong></li>
+            <li>Delivered via: HTTP POST form field <code>wresult</code></li>
+            <li>Token is XML, signed by ADFS certificate</li>
+            <li>Contains claims: Name, Email, Groups, etc.</li>
+          </ul>
+        </div>
+        <div class="compare-card saml">
+          <h3>SAML Response</h3>
+          <ul>
+            <li>Response type: <strong>SAMLResponse</strong></li>
+            <li>Token inside: <strong>SAML 2.0 Assertion</strong></li>
+            <li>Delivered via: HTTP POST form field <code>SAMLResponse</code></li>
+            <li>Assertion is XML, signed (and optionally encrypted)</li>
+            <li>Contains: AuthnStatement, AttributeStatement, Conditions</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="subsection-title">SAML 2.0 Assertion Structure</div>
+      <div class="code-block">
+        <pre><span class="xml-cmt">&lt;!-- SAMLResponse — base64-decoded XML --&gt;</span>
+<span class="xml-tag">&lt;samlp:Response</span> <span class="xml-attr">xmlns:samlp</span>=<span class="xml-val">"urn:oasis:names:tc:SAML:2.0:protocol"</span>
+                 <span class="xml-attr">ID</span>=<span class="xml-val">"_abc123"</span> <span class="xml-attr">Version</span>=<span class="xml-val">"2.0"</span>
+                 <span class="xml-attr">IssueInstant</span>=<span class="xml-val">"2024-01-15T10:00:00Z"</span>
+                 <span class="xml-attr">Destination</span>=<span class="xml-val">"https://application.com/saml/acs"</span><span class="xml-tag">&gt;</span>
+
+  <span class="xml-tag">&lt;saml:Issuer&gt;</span><span class="xml-url">https://sts.conceptswork.com/adfs/services/trust</span><span class="xml-tag">&lt;/saml:Issuer&gt;</span>
+
+  <span class="xml-tag">&lt;samlp:Status&gt;</span>
+    <span class="xml-tag">&lt;samlp:StatusCode</span> <span class="xml-attr">Value</span>=<span class="xml-val">"urn:oasis:names:tc:SAML:2.0:status:Success"</span><span class="xml-tag">/&gt;</span>
+  <span class="xml-tag">&lt;/samlp:Status&gt;</span>
+
+  <span class="xml-tag">&lt;saml:Assertion</span> <span class="xml-attr">ID</span>=<span class="xml-val">"_assertion456"</span> <span class="xml-attr">Version</span>=<span class="xml-val">"2.0"</span><span class="xml-tag">&gt;</span>
+
+    <span class="xml-cmt">&lt;!-- Who issued this assertion --&gt;</span>
+    <span class="xml-tag">&lt;saml:Issuer&gt;</span><span class="xml-url">https://sts.conceptswork.com/adfs/services/trust</span><span class="xml-tag">&lt;/saml:Issuer&gt;</span>
+
+    <span class="xml-cmt">&lt;!-- XML Signature — validates token was not tampered with --&gt;</span>
+    <span class="xml-tag">&lt;ds:Signature&gt;</span>...<span class="xml-tag">&lt;/ds:Signature&gt;</span>
+
+    <span class="xml-cmt">&lt;!-- Time validity + audience restriction --&gt;</span>
+    <span class="xml-tag">&lt;saml:Conditions</span> <span class="xml-attr">NotBefore</span>=<span class="xml-val">"2024-01-15T09:58:00Z"</span>
+                     <span class="xml-attr">NotOnOrAfter</span>=<span class="xml-val">"2024-01-15T10:58:00Z"</span><span class="xml-tag">&gt;</span>
+      <span class="xml-tag">&lt;saml:AudienceRestriction&gt;</span>
+        <span class="xml-tag">&lt;saml:Audience&gt;</span><span class="xml-url">urn:microsoft:adfs:claimsxray</span><span class="xml-tag">&lt;/saml:Audience&gt;</span>
+      <span class="xml-tag">&lt;/saml:AudienceRestriction&gt;</span>
+    <span class="xml-tag">&lt;/saml:Conditions&gt;</span>
+
+    <span class="xml-cmt">&lt;!-- How and when the user was authenticated --&gt;</span>
+    <span class="xml-tag">&lt;saml:AuthnStatement</span> <span class="xml-attr">AuthnInstant</span>=<span class="xml-val">"2024-01-15T10:00:00Z"</span><span class="xml-tag">&gt;</span>
+      <span class="xml-tag">&lt;saml:AuthnContext&gt;</span>
+        <span class="xml-tag">&lt;saml:AuthnContextClassRef&gt;</span>
+          <span class="xml-url">urn:oasis:names:tc:SAML:2.0:ac:classes:Password</span>
+        <span class="xml-tag">&lt;/saml:AuthnContextClassRef&gt;</span>
+      <span class="xml-tag">&lt;/saml:AuthnContext&gt;</span>
+    <span class="xml-tag">&lt;/saml:AuthnStatement&gt;</span>
+
+    <span class="xml-cmt">&lt;!-- User's claims / attributes --&gt;</span>
+    <span class="xml-tag">&lt;saml:AttributeStatement&gt;</span>
+      <span class="xml-tag">&lt;saml:Attribute</span> <span class="xml-attr">Name</span>=<span class="xml-val">"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"</span><span class="xml-tag">&gt;</span>
+        <span class="xml-tag">&lt;saml:AttributeValue&gt;</span>sushanth.kummari@company.com<span class="xml-tag">&lt;/saml:AttributeValue&gt;</span>
+      <span class="xml-tag">&lt;/saml:Attribute&gt;</span>
+      <span class="xml-tag">&lt;saml:Attribute</span> <span class="xml-attr">Name</span>=<span class="xml-val">"http://schemas.microsoft.com/ws/2008/06/identity/claims/groups"</span><span class="xml-tag">&gt;</span>
+        <span class="xml-tag">&lt;saml:AttributeValue&gt;</span>IAM-Admins<span class="xml-tag">&lt;/saml:AttributeValue&gt;</span>
+      <span class="xml-tag">&lt;/saml:Attribute&gt;</span>
+    <span class="xml-tag">&lt;/saml:AttributeStatement&gt;</span>
+
+  <span class="xml-tag">&lt;/saml:Assertion&gt;</span>
+<span class="xml-tag">&lt;/samlp:Response&gt;</span></pre>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         SECTION 8 — COMPARISON
+    ═══════════════════════════════════════════════════════ -->
+    <section class="section" id="comparison">
+      <div class="section-title">SAML vs WS-Federation — Comparison</div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>WS-Federation</th>
+              <th>SAML 2.0</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Standard Body</strong></td>
+              <td>WS-* (Microsoft / IBM)</td>
+              <td>OASIS</td>
+            </tr>
+            <tr>
+              <td><strong>Token Issued</strong></td>
+              <td>SAML <strong>1.0</strong> token (inside RSTR)</td>
+              <td>SAML <strong>2.0</strong> Assertion</td>
+            </tr>
+            <tr>
+              <td><strong>Response Container</strong></td>
+              <td>RSTR (RequestSecurityTokenResponse)</td>
+              <td>SAMLResponse</td>
+            </tr>
+            <tr>
+              <td><strong>IdP / STS Endpoint</strong></td>
+              <td><code>/adfs/ls/</code></td>
+              <td><code>/adfs/ls/IdpInitiatedSignOn</code></td>
+            </tr>
+            <tr>
+              <td><strong>RP Identifier Parameter</strong></td>
+              <td><code>wtrealm</code></td>
+              <td><code>LoginToRP</code></td>
+            </tr>
+            <tr>
+              <td><strong>Auth Method Parameter</strong></td>
+              <td><code>wauth</code></td>
+              <td><code>RequestedAuthenticationContext</code></td>
+            </tr>
+            <tr>
+              <td><strong>Sign-in Action Parameter</strong></td>
+              <td><code>wa=wsignin1.0</code></td>
+              <td>Not required (endpoint implies it)</td>
+            </tr>
+            <tr>
+              <td><strong>Context / State Parameter</strong></td>
+              <td><code>wctx</code></td>
+              <td><code>RelayState</code></td>
+            </tr>
+            <tr>
+              <td><strong>Primary Ecosystem</strong></td>
+              <td>Microsoft (SharePoint, Exchange, .NET)</td>
+              <td>Cross-platform (Salesforce, AWS, Okta, etc.)</td>
+            </tr>
+            <tr>
+              <td><strong>Best Used For</strong></td>
+              <td>Legacy Microsoft apps, ADFS-native integrations</td>
+              <td>Modern cross-platform SSO, cloud apps</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout-blue">
+        <strong>Bottom line:</strong> Both protocols achieve the same result — federated SSO via ADFS / Azure AD.
+        The RP Trust configuration identifier (<code>urn:microsoft:adfs:claimsxray</code>) is
+        <strong>identical in both</strong>; only the endpoint URL and parameter names differ.
+        Choose <strong>WS-Fed</strong> for legacy Microsoft apps; choose <strong>SAML 2.0</strong>
+        for modern cloud applications and cross-platform integrations.
+      </div>
+    </section>
+
+  </main>
+</div>
+</body>
+</html>
